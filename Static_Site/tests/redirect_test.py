@@ -2,7 +2,7 @@
 import requests
 
 #Get the http site for a response
-domain = input("Input http domain: ")
+domain = "http://ryaneskin.com"
 r = requests.get(domain)
 redir = False
 
@@ -14,6 +14,6 @@ for responses in r.history:
         pass
 
 if redir:
-    print("Test Passed")
+    print("Redirect to HTTPS exists, Pas")
 else:
     print("Test Failed")

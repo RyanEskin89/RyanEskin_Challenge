@@ -5,7 +5,7 @@ provider "aws" {
 
 //declaration of the domain name to be used
 variable "domain" {
-    default = "ryaneskin.name"
+    default = "ryaneskin.com"
 }
 
 
@@ -41,6 +41,7 @@ resource "aws_s3_bucket_object" "content" {
     key = "index.html"
     source = "www/index.html"
     etag = "${filemd5("www/index.html")}"
+    content_type = "text/html"
 }
 
 resource "aws_acm_certificate" "domain_cert" {
@@ -60,7 +61,7 @@ resource "aws_acm_certificate" "domain_cert" {
 resource "aws_route53_record" "cert_validation" {
     name = "${aws_acm_certificate.domain_cert.domain_validation_options.0.resource_record_name}"
     type = "${aws_acm_certificate.domain_cert.domain_validation_options.0.resource_record_type}"
-    zone_id = "Z1JLE5V6BXIZO0"
+    zone_id = "Z1NFK5XA32KC1H"
     records = ["${aws_acm_certificate.domain_cert.domain_validation_options.0.resource_record_value}"]    
     ttl = 60
 }
@@ -115,7 +116,7 @@ resource "aws_cloudfront_distribution" "domain_distro" {
 
 
 resource "aws_route53_record" "domain_records" {
-    zone_id = "Z1JLE5V6BXIZO0"
+    zone_id = "Z1NFK5XA32KC1H"
     name = "${var.domain}"
     type = "A"
 

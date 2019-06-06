@@ -2,7 +2,7 @@
 import requests
 
 #Get the https site for a response
-domain = input("Input https domain: ")
+domain = "https://ryaneskin.com"
 r = requests.get(domain)
 
 
