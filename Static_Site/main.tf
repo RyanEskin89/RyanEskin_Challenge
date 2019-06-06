@@ -8,7 +8,8 @@ variable "domain" {
     default = "ryaneskin.com"
 }
 
-
+//Create our S3 bucket to store the static content, apply a policy to allow access so it can present the content
+//as a website
 resource "aws_s3_bucket" "static_site" {
     bucket = "${var.domain}"
     acl = "public-read"
@@ -36,6 +37,7 @@ POLICY
     }
 }
 
+//Upload and store the content into the s3 bucket
 resource "aws_s3_bucket_object" "content" {
     bucket = "${aws_s3_bucket.static_site.bucket}"
     key = "index.html"
@@ -44,6 +46,8 @@ resource "aws_s3_bucket_object" "content" {
     content_type = "text/html"
 }
 
+//Request an SSL cert from AWS ACM for our domain (registered and hosted on route53)
+//With a DNS validation method
 resource "aws_acm_certificate" "domain_cert" {
     domain_name = "${var.domain}"
     validation_method = "DNS"
@@ -58,6 +62,7 @@ resource "aws_acm_certificate" "domain_cert" {
     }
 }
 
+//Create the DNS records for Cert validation in Route53
 resource "aws_route53_record" "cert_validation" {
     name = "${aws_acm_certificate.domain_cert.domain_validation_options.0.resource_record_name}"
     type = "${aws_acm_certificate.domain_cert.domain_validation_options.0.resource_record_type}"
@@ -66,18 +71,19 @@ resource "aws_route53_record" "cert_validation" {
     ttl = 60
 }
 
+//Trigger AWS ACM to perform the validation now that DNS records exist, to verify the SSL certificate
 resource "aws_acm_certificate_validation" "domain_cert" {
   certificate_arn         = "${aws_acm_certificate.domain_cert.arn}"
   validation_record_fqdns = ["${aws_route53_record.cert_validation.fqdn}"]
 }
 
+//Now that we have our content stored, and an SSL certificate that is verified we can create our cloudfront distribution
+//for content delivery and scalability
+//Our distribution is setup to be https only, and redirecting http requests to https
 resource "aws_cloudfront_distribution" "domain_distro" {
     origin {
         domain_name = "${aws_s3_bucket.static_site.bucket_regional_domain_name}"
         origin_id = "${var.domain}"
-        //s3_origin_config {
-        //    origin_access_identity = "${aws_cloudfront_origin_access_identity.default.cloudfront_access_identity_path}"
-        //}
     }
 
     enabled = true
@@ -114,7 +120,7 @@ resource "aws_cloudfront_distribution" "domain_distro" {
     }
 }
 
-
+//Once the distribution is complete, we add an Alias A record to our hosted zone in route53 for the cloudfront distribution
 resource "aws_route53_record" "domain_records" {
     zone_id = "Z1NFK5XA32KC1H"
     name = "${var.domain}"
