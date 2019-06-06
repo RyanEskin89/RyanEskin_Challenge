@@ -1,0 +1,6 @@
+./*.tfstate
+.terraform/
+*.log
+terraform.tfplan
+terraform.tfstate
+credentials
